@@ -1,11 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import type { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import {prisma} from './configs/prisma'
 
 
-dotenv.config();
 
 const PORT = process.env.PORT ?? 3500;
 
@@ -17,7 +17,10 @@ app.use(cookieParser());
 app.use(express.urlencoded({extended: true}));
 
 
-app.get('/', (req: Request, res: Response) => res.json({message: "Hello from Express"}));
+app.get('/',async (req: Request, res: Response) => {
+	const users = await prisma.user.findMany();
+	res.json(users);
+});
 
 
 app.listen(PORT, () => console.info(`Server running on PORT: ${PORT}`));
