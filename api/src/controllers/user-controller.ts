@@ -1,13 +1,13 @@
-import asyncHandler from "express-async-handler";
-import type { Request, RequestHandler, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { createUser,updateUserName, updateUserPassword, findAllUsers , deleteUserById, findUserByEmail, findUserById  } from "@/services/user-services";
 import { registerUserSchema, type RegisterUser, paramsSchema , updatePasswordSchema, Password} from "@/shared/user-schema";
 import { NotFoundError, BadRequestError, ConflictError } from "@/shared/app-error";
-import { hashPassword, comparePassword } from "@/utils/password";
+import { hashPassword } from "@/utils/password";
 import { StatusCodes } from "http-status-codes";
 import { PaginationQuery } from "@/shared/request-types";
 
-export const registerUserController = asyncHandler(async (req: Request<{},{},RegisterUser >, res: Response) => {
+export const registerUserController = async (req: Request<{},{},RegisterUser >, res: Response,next: NextFunction) => {
+	try{
 	const result = registerUserSchema.safeParse(req.body);
 	if(!result.success) {
 		throw new BadRequestError('Data Provided is invalid');
@@ -29,10 +29,15 @@ export const registerUserController = asyncHandler(async (req: Request<{},{},Reg
 
 	res.status(StatusCodes.CREATED).json({message: 'User Created', userId: createdUser.id, status: 'success'});
 
-});
+	}
+	catch(err) {
+		next(err);
+	}
+};
 
 
-export const getAllUsersController = asyncHandler(async (req: Request<{},{},{},PaginationQuery >, res: Response) => {
+export const getAllUsersController = async (req: Request<{},{},{},PaginationQuery >, res: Response, next: NextFunction) => {
+	try{
 	const page = Number(req.query.page) || 1;
 	const size = Number(req.query.size) || 10;
 
@@ -46,10 +51,15 @@ export const getAllUsersController = asyncHandler(async (req: Request<{},{},{},P
 		users: result.users,
 		meta: result.meta
 	});
-});
+	}
+	catch(err) {
+		next(err);
+	}
+};
 
 
-export const updateUserNameController = asyncHandler(async (req: Request<{id: string},{}, {name: string}>, res: Response) => {
+export const updateUserNameController = async (req: Request<{id: string},{}, {name: string}>, res: Response, next: NextFunction) => {
+	try{
 	const name = req.body.name;
 	const result = paramsSchema.safeParse(req.params);
 
@@ -75,13 +85,21 @@ export const updateUserNameController = asyncHandler(async (req: Request<{id: st
 	}
 
 	res.sendStatus(204);
-});
+	}
+	catch(err) {
+		next(err);
+	}
+};
 
-export const updatePasswordController = asyncHandler(async (req: Request<{},{}, Password>, res: Response) => {
-
+export const updatePasswordController = async (req: Request<{},{}, Password>, res: Response, next: NextFunction) => {
+	try{
 	const result = updatePasswordSchema.safeParse(req.body);
 	if(!result.success) {
 		throw new BadRequestError('Data provided is invalid ngani');
 	}
 
-});
+	}
+	catch(err) {
+		next(err);
+	}
+};

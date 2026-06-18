@@ -42,6 +42,18 @@ export interface PaginatedUser {
 	users: ReturnedUser[],
 	meta: PaginationMetaData
 }
+
+export interface AuthUser {
+	id: string;
+	email: string;
+	role: 'ADMIN' | 'CUSTOMER';
+}
+
+export interface UserPayload  {
+	id: string;
+	email: string;
+	role: 'ADMIN' | 'CUSTOMER';
+}
 		
 
 

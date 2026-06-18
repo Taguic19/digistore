@@ -3,13 +3,12 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import {prisma} from './configs/prisma'
 import { errorMiddleware, notFoundHandler } from './middlewares/error-middleware';
 import userRouter from './routes/user-routes';
+import authRouter from './routes/auth-routes';
+import { env } from './configs/env';
 
-
-const PORT = process.env.PORT ?? 3500;
-
+const PORT = env.PORT ?? 3501;
 const app = express();
 
 app.use(express.json());
@@ -23,6 +22,7 @@ app.get('/', (req: Request, res: Response) => {
 });	
 
 app.use('/api/v1/users',userRouter);
+app.use('/api/v1/auth', authRouter);
 
 app.use(notFoundHandler);
 app.use(errorMiddleware);

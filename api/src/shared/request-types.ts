@@ -1,6 +1,8 @@
-export interface PaginationQuery {
-	page: number;
-	size: number;
+import {ParsedQs} from 'qs';
+
+export interface PaginationQuery extends ParsedQs {
+	page?: string;
+	size?: string;
 }
 
 
