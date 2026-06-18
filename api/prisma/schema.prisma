@@ -18,6 +18,8 @@ model User {
   addresses Address[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@map("users")
 }
 
 enum Role {
@@ -36,6 +38,8 @@ model Address {
   isDefault  Boolean  @default(false)
   orders     Order[]
   createdAt  DateTime @default(now())
+
+  @@map("address")
 }
 
 model Category {
@@ -58,6 +62,8 @@ model Product {
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+
+  @@map("products")
 }
 
 model Cart {
@@ -67,6 +73,8 @@ model Cart {
   items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  @@map("cart")
 }
 
 model CartItem {
@@ -79,6 +87,7 @@ model CartItem {
   createdAt DateTime @default(now())
 
   @@unique([cartId, productId])
+  @@map("cart_items")
 }
 
 model Order {
@@ -93,6 +102,8 @@ model Order {
   note      String?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@map("orders")
 }
 
 enum OrderStatus {
@@ -111,4 +122,6 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
+
+  @@map("order_items")
 }

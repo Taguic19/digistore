@@ -1,11 +1,12 @@
-import { RegisterUser } from '../shared/user-schema';
+import { PaginatedUser, RegisterUser } from '../shared/user-schema';
 import {prisma} from '../configs/prisma';
 
 
 const safeSelect =  {
 			id: true,
 			email: true,
-			name: true
+			name: true,
+			role: true
 		}
 
 export const createUser = async (userData: RegisterUser) => {
@@ -16,10 +17,30 @@ export const createUser = async (userData: RegisterUser) => {
 }
 
 
-export const findAllUsers = async () => {
-	return await prisma.user.findMany({
-		select: safeSelect
-	});
+export const findAllUsers = async (page: number, size: number = 10): Promise<PaginatedUser> => {
+	const defaultPage = Math.max(1,page);
+	const skip = (defaultPage -1 ) * size;
+	const [users, total] = await prisma.$transaction([
+		prisma.user.findMany({
+			select: safeSelect,
+			take: size,
+			skip,
+			orderBy: {createdAt: 'asc'}
+		}),
+		prisma.user.count()
+	]);
+
+	return {
+		users,
+		meta: {
+			total,
+			defaultPage,
+			size,
+			totalPages: Math.ceil(total / size),
+			hasNextPage: defaultPage < Math.ceil(total / size),
+			hasPreviousPage: defaultPage > 1
+		}
+	}
 }
 
 export const updateUserPassword = async (id: string, password: string) => {
@@ -44,7 +65,7 @@ export const findUserById = async (id: string) => {
 export const updateUserName = async (id: string, name: string) => {
   return await prisma.user.update({
     where: { id },
-    data: { name },
+    data: { name },	
     select: safeSelect
   })
 }
