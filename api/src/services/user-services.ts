@@ -43,10 +43,10 @@ export const findAllUsers = async (page: number, size: number = 10): Promise<Pag
 	}
 }
 
-export const updateUserPassword = async (id: string, password: string) => {
+export const updateUserPassword = async (email: string, password: string) => {
 	return await prisma.user.update({
 		where: {
-			id
+			email
 		},
 		data: {
 			password

@@ -8,7 +8,7 @@ const userRouter: Router = Router();
 
 userRouter.post('/',registerUserController);
 userRouter.get('/',authenticate,authorize('CUSTOMER'), getAllUsersController);
-userRouter.put('/', authenticate, updatePasswordController);
-userRouter.put('/:id', authenticate, updateUserNameController);
+userRouter.put('/password', authenticate, updatePasswordController);
+userRouter.put('/name', authenticate, updateUserNameController);
 
 export default userRouter;

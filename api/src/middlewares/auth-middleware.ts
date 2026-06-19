@@ -2,30 +2,28 @@ import type { NextFunction, Request, Response } from "express";
 import type { AuthUser } from "@/shared/user-schema";
 import { UnauthorizedError } from "@/shared/app-error";
 import jwt from 'jsonwebtoken';
+import { env } from "@/configs/env";
+import { ParsedQs } from "qs";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest<P = {},ResBody= any, ReqBody = any, Query = ParsedQs > extends Request<P,ResBody, ReqBody, Query> {
 	user?: AuthUser; 
 }
 
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
-	const authHeader = req.headers['authorization'];
-	if(!authHeader || !authHeader.startsWith('Bearer ')) {
-		throw new UnauthorizedError('Missing or invalid authorization header');
-	}
-	const token = authHeader.split(' ')[1].trim();
-
-	if(!token) {
-		throw new UnauthorizedError('Invalid Authorization Header'); 
-	}
 	try{
 
-	const decoded = jwt.verify(token,process.env.ACCESS_SECRET!) as AuthRequest['user'];
+	const accessToken = req.cookies.accessToken as string;
+	if(!accessToken) {
+		throw new UnauthorizedError('User not authenticated');
+	}
+	const decoded = jwt.verify(accessToken,env.ACCESS_SECRET) as AuthUser;
 	req.user = decoded;
-	next();	
+	next();
+
 	}
 	catch(err: unknown) {
-		res.status(401).json({ message: 'Invalid or expired token' });
+		next(err);
 	}
 
 }

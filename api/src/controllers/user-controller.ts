@@ -1,10 +1,12 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { createUser,updateUserName, updateUserPassword, findAllUsers , deleteUserById, findUserByEmail, findUserById  } from "@/services/user-services";
 import { registerUserSchema, type RegisterUser, paramsSchema , updatePasswordSchema, Password} from "@/shared/user-schema";
-import { NotFoundError, BadRequestError, ConflictError } from "@/shared/app-error";
-import { hashPassword } from "@/utils/password";
+import { NotFoundError, BadRequestError, ConflictError, UnauthorizedError } from "@/shared/app-error";
+import { comparePassword, hashPassword } from "@/utils/password";
 import { StatusCodes } from "http-status-codes";
 import { PaginationQuery } from "@/shared/request-types";
+import { AuthRequest } from "@/middlewares/auth-middleware";
+import { getAuthUser } from "@/utils/auth-guard";
 
 export const registerUserController = async (req: Request<{},{},RegisterUser >, res: Response,next: NextFunction) => {
 	try{
@@ -36,7 +38,7 @@ export const registerUserController = async (req: Request<{},{},RegisterUser >, 
 };
 
 
-export const getAllUsersController = async (req: Request<{},{},{},PaginationQuery >, res: Response, next: NextFunction) => {
+export const getAllUsersController = async (req: AuthRequest<{},{},{},PaginationQuery >, res: Response, next: NextFunction) => {
 	try{
 	const page = Number(req.query.page) || 1;
 	const size = Number(req.query.size) || 10;
@@ -58,18 +60,10 @@ export const getAllUsersController = async (req: Request<{},{},{},PaginationQuer
 };
 
 
-export const updateUserNameController = async (req: Request<{id: string},{}, {name: string}>, res: Response, next: NextFunction) => {
+export const updateUserNameController = async (req: AuthRequest<{},{}, {name: string}>, res: Response, next: NextFunction) => {
 	try{
+	const {id} = getAuthUser(req);
 	const name = req.body.name;
-	const result = paramsSchema.safeParse(req.params);
-
-	if(!result.success) {
-		throw new BadRequestError('Invalid user id');
-	}
-
-	const {id} = req.params;
-
-	
 	const namePattern = /^[^0-9]*/;
 	
 	const isValid = namePattern.test(name);
@@ -85,18 +79,39 @@ export const updateUserNameController = async (req: Request<{id: string},{}, {na
 	}
 
 	res.sendStatus(204);
-	}
+	}	
 	catch(err) {
 		next(err);
 	}
 };
 
-export const updatePasswordController = async (req: Request<{},{}, Password>, res: Response, next: NextFunction) => {
+export const updatePasswordController = async (req: AuthRequest<{},{}, Password>, res: Response, next: NextFunction) => {
 	try{
+	const {email} = getAuthUser(req);
 	const result = updatePasswordSchema.safeParse(req.body);
 	if(!result.success) {
-		throw new BadRequestError('Data provided is invalid ngani');
+		throw new BadRequestError('Data provided is invalid');
 	}
+
+	const matchedUser = await findUserByEmail(email);
+	if(!matchedUser) {
+		throw new NotFoundError('User not found');
+	}
+
+	const isMatchedPassword = await comparePassword(result.data.password, matchedUser.password);
+	if(!isMatchedPassword) {
+		throw new UnauthorizedError('Password dont match');
+	}
+
+	const hashedPassword = await hashPassword(result.data.newPassword);
+
+	const updatedUser = await updateUserPassword(email, hashedPassword);
+
+	if(!updatedUser) {
+		throw new Error('Error Updating Password');
+	}
+
+	res.status(200).json({status: 'success', message: 'Password Updated'});
 
 	}
 	catch(err) {
