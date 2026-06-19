@@ -3,3 +3,19 @@
 * {
 	font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+.auth-field-container {
+	@apply flex flex-col gap-1 mb-2;
+}
+
+.auth-field {
+	@apply border-black border rounded w-100 pl-2 py-1.5;
+}
+
+.auth-button {
+	@apply w-full bg-black text-white py-1.5 rounded mt-2 cursor-pointer;
+}
+
+.field-error {
+	@apply text-red-700 text-sm;
+}
