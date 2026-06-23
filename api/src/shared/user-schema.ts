@@ -3,7 +3,8 @@ import {z} from 'zod';
 const registerUserSchema = z.object({
 	name: z.string(),
 	email: z.email({error: "Invalid email address"}),
-	password: z.string().min(8,'Password too short')
+	password: z.string().min(8,'Password too short'),
+	role: z.enum(['CUSTOMER','SELLER','ADMIN'])
 });
 
 const paramsSchema = z.object({
@@ -26,7 +27,7 @@ export interface ReturnedUser {
 	id: string;
 	name: string | null;
 	email: string;
-	role: 'CUSTOMER' | 'ADMIN'
+	role: 'CUSTOMER' | 'SELLER' | 'ADMIN'
 }
 
 export interface PaginationMetaData {
@@ -46,13 +47,13 @@ export interface PaginatedUser {
 export interface AuthUser {
 	id: string;
 	email: string;
-	role: 'ADMIN' | 'CUSTOMER';
+	role: 'SELLER' | 'CUSTOMER' | 'ADMIN';
 }
 
 export interface UserPayload  {
 	id: string;
 	email: string;
-	role: 'ADMIN' | 'CUSTOMER';
+	role: 'SELLER' | 'CUSTOMER' | 'ADMIN';
 }
 		
 

@@ -4,19 +4,18 @@ import { Link } from 'react-router-dom'
 import {type RegisterData, registerSchema } from '../../types/auth-types'
 import {zodResolver} from '@hookform/resolvers/zod';
 import {toast} from 'sonner';
-import { useState } from 'react';
-
 
 const RegisterPage = () => {
 
 
-	const {register, reset,watch, formState: {errors}, handleSubmit} = useForm<RegisterData>({
+	const {register, reset, formState: {errors}, handleSubmit} = useForm<RegisterData>({
 		resolver: zodResolver(registerSchema),
 		defaultValues: {
 			email: '',
 			name: '',
 			password: '',
-			confirmPassword: ''
+			confirmPassword: '',
+			role: 'CUSTOMER'
 		}
 	});
 
@@ -84,6 +83,13 @@ const RegisterPage = () => {
 					<input type="password" {...register('confirmPassword')} placeholder='Enter password here:' id='confirm-password' className='auth-field' />
 					{errors.confirmPassword && <span className='field-error'>{errors.confirmPassword.message}</span> }
 
+				</div>
+				<div className='auth-field-container'>
+					<label htmlFor="role">Choose what you want to be</label>
+					<select {...register('role')} className='auth-field'>
+						<option value="CUSTOMER">Customer</option>
+						<option value="SELLER">Seller</option>
+					</select>
 				</div>
 				<button type='submit' className='auth-button'>Signup</button>
 				<p className='mt-2'>Already have an account? <Link className='text-blue-700 font-semibold' to='/'>Signin</Link> </p>

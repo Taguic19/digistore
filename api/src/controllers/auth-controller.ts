@@ -44,6 +44,7 @@ const loginUserController = async (req: Request<{},{},LoginData >, res: Response
 }
 
 
+
 const logoutController = async (req: Request, res: Response, next: NextFunction) => {
 	try{
 		res.clearCookie('accessToken');

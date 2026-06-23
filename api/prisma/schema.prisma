@@ -7,6 +7,31 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==================== ENUMS ====================
+
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// ==================== USER ====================
+
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
@@ -16,48 +41,74 @@ model User {
   cart      Cart?
   orders    Order[]
   addresses Address[]
+  seller    Seller?   // ← if role is SELLER
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@map("users")
 }
 
-enum Role {
-  CUSTOMER
-  ADMIN
-}
+// ==================== ADDRESS ====================
 
 model Address {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  street     String
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street       String
   municipality String
-  province   String
-  postalCode String
-  isDefault  Boolean  @default(false)
-  orders     Order[]
-  createdAt  DateTime @default(now())
+  province     String
+  postalCode   String
+  isDefault    Boolean  @default(false)
+  orders       Order[]
+  createdAt    DateTime @default(now())
 
   @@map("address")
 }
+
+// ==================== SELLER ====================
+
+model Seller {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName   String       @unique
+  description String?
+  logo        String?
+  status      SellerStatus @default(PENDING)  // admin approves
+  commission  Decimal      @default(0.10) @db.Decimal(4, 2) // 10% platform cut
+  products    Product[]
+  orders      SellerOrder[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("sellers")
+}
+
+// ==================== CATEGORY ====================
 
 model Category {
   id        String    @id @default(cuid())
   name      String    @unique
   products  Product[]
   createdAt DateTime  @default(now())
+
+  @@map("categories")
 }
+
+// ==================== PRODUCT ====================
 
 model Product {
   id          String      @id @default(cuid())
-  name        String
-  description String?
-  price       Decimal     @db.Decimal(10, 2)  
-  stock       Int         @default(0)
-  images      String[]
+  sellerId    String                        // ← belongs to a seller
+  seller      Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   categoryId  String
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  images      String[]
+  isActive    Boolean     @default(true)   // seller can toggle
   cartItems   CartItem[]
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
@@ -65,6 +116,8 @@ model Product {
 
   @@map("products")
 }
+
+// ==================== CART ====================
 
 model Cart {
   id        String     @id @default(cuid())
@@ -90,38 +143,53 @@ model CartItem {
   @@map("cart_items")
 }
 
+// ==================== ORDER ====================
+
 model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  addressId String
-  address   Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
-  items     OrderItem[]
-  status    OrderStatus @default(PENDING)
-  total     Decimal     @db.Decimal(10, 2)
-  note      String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  addressId    String
+  address      Address       @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  items        OrderItem[]
+  sellerOrders SellerOrder[] // ← split per seller
+  status       OrderStatus   @default(PENDING)
+  total        Decimal       @db.Decimal(10, 2)
+  note         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@map("orders")
 }
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
+// one order can have items from multiple sellers
+// so we split it per seller
+model SellerOrder {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerId  String
+  seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  items     OrderItem[]
+  status    OrderStatus @default(PENDING)  // seller manages their own status
+  subtotal  Decimal     @db.Decimal(10, 2)
+  commission Decimal    @db.Decimal(10, 2) // platform cut
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("seller_orders")
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  id            String      @id @default(cuid())
+  orderId       String
+  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerOrderId String
+  sellerOrder   SellerOrder @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity      Int
+  price         Decimal     @db.Decimal(10, 2)
 
   @@map("order_items")
 }

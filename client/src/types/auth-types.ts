@@ -9,7 +9,8 @@ const registerSchema = z.object({
 	email: z.email('Invalid email address'),
 	name: z.string().min(1,'Name is required'),
 	password: z.string().min(8,'Password too short'),
-	confirmPassword: z.string().min(8, 'Password too short')
+	confirmPassword: z.string().min(8, 'Password too short'),
+	role: z.enum(['CUSTOMER','SELLER'])
 }).refine(data => data.password === data.confirmPassword, {
 	message: 'Passwords dont match',
 	path: ['confirmPassword']

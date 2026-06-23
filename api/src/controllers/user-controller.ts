@@ -1,4 +1,4 @@
-import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { createUser,updateUserName, updateUserPassword, findAllUsers , deleteUserById, findUserByEmail, findUserById  } from "@/services/user-services";
 import { registerUserSchema, type RegisterUser, paramsSchema , updatePasswordSchema, Password} from "@/shared/user-schema";
 import { NotFoundError, BadRequestError, ConflictError, UnauthorizedError } from "@/shared/app-error";
