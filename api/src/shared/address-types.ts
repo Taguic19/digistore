@@ -9,5 +9,14 @@ export const addressSchema = z.object({
 	postalCode: z.string(),
 });
 
+export const addressBodySchema = z.object({
+	street: z.string(),
+	municipality: z.string(),
+	province: z.string(),
+	postalCode: z.string()
+});
+
+export type AddressBody = z.infer<typeof addressBodySchema>;
+
 
 export type CustomerAddress = z.infer<typeof addressSchema>;

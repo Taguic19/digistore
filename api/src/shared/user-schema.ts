@@ -20,6 +20,9 @@ const updatePasswordSchema = z.object({
 type Password = z.infer<typeof updatePasswordSchema>;
 
 
+export type Params = z.infer<typeof paramsSchema>;
+
+
 type RegisterUser = z.infer<typeof registerUserSchema>;
 
 

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { createUser,updateUserName, updateUserPassword, findAllUsers , deleteUserById, findUserByEmail, findUserById  } from "@/services/user-services";
-import { registerUserSchema, type RegisterUser, paramsSchema , updatePasswordSchema, Password} from "@/shared/user-schema";
+import { createUser,updateUserName, updateUserPassword, findAllUsers , findUserByEmail, deleteUserById } from "@/services/user-services";
+import { registerUserSchema, type RegisterUser , updatePasswordSchema, Password, Params, paramsSchema} from "@/shared/user-schema";
 import { NotFoundError, BadRequestError, ConflictError, UnauthorizedError } from "@/shared/app-error";
 import { comparePassword, hashPassword } from "@/utils/password";
 import { StatusCodes } from "http-status-codes";
@@ -29,7 +29,7 @@ export const registerUserController = async (req: Request<{},{},RegisterUser >, 
 		throw new Error('Error while creating user');
 	}
 
-	res.status(StatusCodes.CREATED).json({message: 'User Created', userId: createdUser.id, status: 'success'});
+	res.status(StatusCodes.CREATED).json({message: 'User Created', data: {createdUserId: createdUser.id}, status: 'success'});
 
 	}
 	catch(err) {
@@ -50,7 +50,9 @@ export const getAllUsersController = async (req: AuthRequest<{},{},{},Pagination
 	res.status(200).json({
 		status: 'success',
 		message: 'User Fetched Successfully',
-		users: result.users,
+		data: {
+			users: result.users
+		},
 		meta: result.meta
 	});
 	}
@@ -78,7 +80,8 @@ export const updateUserNameController = async (req: AuthRequest<{},{}, {name: st
 		throw new Error('Failed to update user name');
 	}
 
-	res.sendStatus(204);
+	res.status(200).json({status: 'success',message: 'Username is updated', data: {updatedUserId: updatedUser.id}});
+
 	}	
 	catch(err) {
 		next(err);
@@ -111,10 +114,33 @@ export const updatePasswordController = async (req: AuthRequest<{},{}, Password>
 		throw new Error('Error Updating Password');
 	}
 
-	res.status(200).json({status: 'success', message: 'Password Updated'});
+	res.status(200).json({status: 'success', message: 'Password Updated', data: {updatedUserId: updatedUser.id}});
 
 	}
 	catch(err) {
 		next(err);
 	}
 };
+
+export const deleteUserByIdController = async (req: AuthRequest<Params>, res: Response, next: NextFunction) => {
+	try{
+
+	const result = paramsSchema.safeParse(req.params);
+	if(!result.success) {
+		throw new BadRequestError('Parameter provided is malformed');
+	}
+
+	const deletedUser = await deleteUserById(result.data.id);
+	if(!deletedUser) {
+		throw new Error('Failed to delete user');
+	}
+
+	res.status(200).json({status: 'success', message: 'User Deleted', data: {
+		deletedUserId: deletedUser.id
+	}});
+
+	}
+	catch(err) {
+		next(err);
+	}
+}

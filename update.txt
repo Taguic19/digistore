@@ -3,4 +3,3 @@ Done creating the routes, controller and services for auth & user
 Done creating the services for address
 Done seeding the categories 
 
-Current Todo : Build the admin backend and frontend

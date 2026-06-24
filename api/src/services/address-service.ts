@@ -33,6 +33,25 @@ export const updateAddressService = async (id: string, addressData: Partial<Omit
 	});
 }
 
+export const findAddressByIdService = async (addressId: string, userId: string) => {
+	return await prisma.address.findFirst({
+		where: {userId,id: addressId}
+	})
+}
+
+export const updateAddressStatusService = async (userId: string, addressId: string) => {
+	return await prisma.$transaction([
+		prisma.address.updateMany({
+			where: {userId},
+			data: {isDefault: false}
+		}),
+		prisma.address.update({
+			where: {id: addressId},
+			data: {isDefault: true}
+		})
+	]);
+}
+
 
 
 

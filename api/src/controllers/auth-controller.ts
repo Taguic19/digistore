@@ -35,7 +35,7 @@ const loginUserController = async (req: Request<{},{},LoginData >, res: Response
 	const refreshToken = generateRefreshToken({id});
 	setAuthCookies(res,accessToken, refreshToken);
 
-	res.status(200).json({status: 'success', message: 'Login successfully'});
+	res.status(200).json({status: 'success', message: 'Login successfully', data: null});
 	}
 	catch(err) {
 		next(err);
@@ -49,7 +49,7 @@ const logoutController = async (req: Request, res: Response, next: NextFunction)
 	try{
 		res.clearCookie('accessToken');
 		res.clearCookie('refreshToken');
-		res.status(200).json({ status: 'success', message: 'Logged out successfully' });
+		res.status(200).json({ status: 'success', message: 'Logged out successfully',data: null });
 	}
 	catch(err) {
 		next(err);
@@ -75,7 +75,7 @@ const refreshTokenController = async (req: Request, res: Response, next: NextFun
 	const newAccessToken = generateAccessToken(userPayload);
 	const newRefreshToken = generateRefreshToken({id: userPayload.id});
 	setAuthCookies(res,newAccessToken,newRefreshToken);
-	res.status(200).json({ status: 'success', message: 'Token refreshed' });
+	res.status(200).json({ status: 'success', message: 'Token refreshed',data: null });
 	}
 	catch(err) {
 		next(err);

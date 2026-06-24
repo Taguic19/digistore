@@ -42,8 +42,8 @@ model User {
   orders    Order[]
   addresses Address[]
   seller    Seller?   // ← if role is SELLER
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -52,15 +52,15 @@ model User {
 
 model Address {
   id           String   @id @default(cuid())
-  userId       String
+  userId       String @map("user_id")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   street       String
   municipality String
   province     String
-  postalCode   String
-  isDefault    Boolean  @default(false)
+  postalCode   String @map("postal_code")
+  isDefault    Boolean  @default(false) @map("is_default")
   orders       Order[]
-  createdAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("address")
 }
@@ -69,17 +69,17 @@ model Address {
 
 model Seller {
   id          String       @id @default(cuid())
-  userId      String       @unique
+  userId      String       @unique @map("user_id")
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  storeName   String       @unique
+  storeName   String       @unique @map("store_name")
   description String?
   logo        String?
   status      SellerStatus @default(PENDING)  // admin approves
   commission  Decimal      @default(0.10) @db.Decimal(4, 2) // 10% platform cut
   products    Product[]
   orders      SellerOrder[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at") 
 
   @@map("sellers")
 }
@@ -90,7 +90,7 @@ model Category {
   id        String    @id @default(cuid())
   name      String    @unique
   products  Product[]
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@map("categories")
 }
@@ -99,20 +99,20 @@ model Category {
 
 model Product {
   id          String      @id @default(cuid())
-  sellerId    String                        // ← belongs to a seller
+  sellerId    String      @map("seller_id")            // ← belongs to a seller
   seller      Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  categoryId  String
+  categoryId  String      @map("category_id")
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   name        String
   description String?
   price       Decimal     @db.Decimal(10, 2)
   stock       Int         @default(0)
   images      String[]
-  isActive    Boolean     @default(true)   // seller can toggle
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  isActive    Boolean     @default(true) @map("is_active")   // seller can toggle
+  cartItems   CartItem[]  
+  orderItems  OrderItem[] 
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
 
   @@map("products")
 }
@@ -121,23 +121,23 @@ model Product {
 
 model Cart {
   id        String     @id @default(cuid())
-  userId    String     @unique
+  userId    String     @unique @map("user_id")
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  items     CartItem[] 
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   @@map("cart")
 }
 
 model CartItem {
   id        String   @id @default(cuid())
-  cartId    String
+  cartId    String @map("cart_id")
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
+  productId String @map("product_id")
   product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity  Int      @default(1)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([cartId, productId])
   @@map("cart_items")
@@ -147,12 +147,12 @@ model CartItem {
 
 model Order {
   id           String        @id @default(cuid())
-  userId       String
+  userId       String @map("user_id")
   user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  addressId    String
+  addressId    String @map("address_id")
   address      Address       @relation(fields: [addressId], references: [id], onDelete: Restrict)
   items        OrderItem[]
-  sellerOrders SellerOrder[] // ← split per seller
+  sellerOrders SellerOrder[]   // ← split per seller
   status       OrderStatus   @default(PENDING)
   total        Decimal       @db.Decimal(10, 2)
   note         String?
@@ -166,13 +166,13 @@ model Order {
 // so we split it per seller
 model SellerOrder {
   id        String      @id @default(cuid())
-  orderId   String
+  orderId   String  @map("order_id")
   order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sellerId  String
+  sellerId  String @map("seller_id")
   seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   items     OrderItem[]
   status    OrderStatus @default(PENDING)  // seller manages their own status
-  subtotal  Decimal     @db.Decimal(10, 2)
+  subtotal  Decimal     @db.Decimal(10, 2) @map("sub_total")
   commission Decimal    @db.Decimal(10, 2) // platform cut
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -182,11 +182,11 @@ model SellerOrder {
 
 model OrderItem {
   id            String      @id @default(cuid())
-  orderId       String
+  orderId       String @map("order_id")
   order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  sellerOrderId String
+  sellerOrderId String @map("seller_order_id")
   sellerOrder   SellerOrder @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
-  productId     String
+  productId     String @map("product_id")
   product       Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity      Int
   price         Decimal     @db.Decimal(10, 2)
